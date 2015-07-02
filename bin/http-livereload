@@ -1,0 +1,77 @@
+#!/usr/bin/env node
+
+var optimist = require('optimist');
+var http = require('http');
+var createApplication = require('../middleware');
+
+var argv = optimist
+  .usage('Usage: $0 <path> [options]')
+  .usage('Default <path> is ./www')
+  .alias('h', 'host')
+  .string('h')
+  .describe('h', 'Host of the server.')
+  .alias('p', 'port')
+  .string('p')
+  .describe('p', 'Port on the host to bind to.')
+  .string('lp')
+  .describe('lp', 'Port for the LiveReload server.')
+  .string('l', 'log')
+  .describe('l', 'Log requests to stdout with a <format>.')
+  .boolean('cordova')
+  .describe('cordova', 'If set, the server will return a stub for Cordova device middleware at /cordova.js')
+  .boolean('no-lr')
+  .describe('no-lr', 'Disable LiveReload.')
+  .boolean('no-log')
+  .describe('no-log', 'Disables logging')
+  .alias('h', 'help')
+  .boolean('h')
+  .describe('h', 'Help on usage; you are looking at it.')
+  .default('p', 3000)
+  .default('lp', 35729)
+  .default('l', 'tiny')
+  .default('no-lr', false)
+  .default('no-log', false)
+  .default('cordova', false)
+  .argv;
+
+if(argv._.length === 0 || argv.help) {
+  console.log(optimist.help());
+  process.exit();
+}
+
+// Options
+var dir = argv._[0] || 'www';
+var host = argv.h;
+var port = argv.p;
+
+var opts = {
+  livereload: !argv['no-lr'],
+  livereloadPort: argv.lp,
+  cordova: argv.cordova,
+  log: !argv['no-log'],
+  logFormat: argv.l
+};
+
+process.on('exit', function() {
+  console.log('Server is going down.');
+});
+
+process.on('SIGTERM', function() {
+  return process.exit(0);
+});
+
+process.on('SIGINT', function() {
+  return process.exit(0);
+});
+
+var app = createApplication(dir, opts);
+var server = http.createServer(app).listen(port, host, function() {
+  console.log('Directory (' + dir + ') is served on http://' +
+              (host || 'localhost') + ':' + port + '/');
+});
+
+server.on('close', function() {
+  process.nextTick(function() {
+    process.exit();
+  });
+});
