@@ -1,85 +1,20 @@
-ng-template-bundler
+http-livereload
 ==========
 
-CLI utility to turn Angular templates into a javascript module, optionally with
-browserify support and bundling.
+CLI wrapper for starting a http server with integrated LiveReload and file change watcher / notifier.
 
 Usage
 -----
-```
-$ ng-template-bundler inputFile [inputFile] [-m module] [-o outfile] [-b basedir] [--browserify] [--bundle]
-```
-With a single input file, the module name will be the template's name if no -m option is given.
-With multiple input files, the default module name will be `templates`.
-Without an outfile, result will be written to stdout.
+Run `http-livereload` without arguments for options.
 
-
-Without a module name:
-
+Example
+-----
 ```
-$ ng-template-bundler test/test.tmpl
-angular
-  .module('test/test.tmpl', [])
-  .run(['$templateCache', function($templateCache) {
-    $templateCache.put('test/test.tmpl', '...');
-  }]);
+http-livereload ./www --watch-dir ./src --watch-cmd='make reload' --cordova
 ```
 
-With a module name:
-
-```
-$ ng-template-bundler test/test.tmpl -m foo
-angular
-  .module('foo', [])
-  .run(['$templateCache', function ($templateCache) {
-    $templateCache.put('test/test.tmpl', '...');
-  }]);
-```
-
-With a multiple input files:
-
-```
-$ ng-template-bundler test/test.tmpl test/another.tmpl
-angular
-  .module('templates', [])
-  .run(['$templateCache', function ($templateCache) {
-    $templateCache.put('test/test.tmpl', '...');
-    $templateCache.put('test/another.tmpl', ' ...');
-  }]);
-```
-
-With a multiple input files and browserify:
-
-```
-$ ng-template-bundler test/test.tmpl test/another.tmpl
-module.exports = angular
-  .module('templates', [])
-  .run(['$templateCache', function ($templateCache) {
-    $templateCache.put('test/test.tmpl', '...');
-    $templateCache.put('test/another.tmpl', ' ...');
-}]);
-```
-
-With a single input files and browserify:
-
-```
-$ ng-template-bundler test/test.tmpl test/another.tmpl
-module.exports = angular
-  .module('templates', [])
-  .run(['$templateCache', function ($templateCache) {
-    $templateCache.put('test/test.tmpl', '...');
-    $templateCache.put('test/another.tmpl', ' ...');
-  }]);
-```
-
-```
-$ ng-template-bundler test/test.tmpl --browserify
-module.exports = angular
-  .module('test/test.tmpl', [])
-  .run(['$templateCache', function($templateCache) {
-    $templateCache.put('test/test.tmpl', '...');
-  }]);
-```
+Serve `www` on `localhost:3000` with _Cordova_ device stub and watch for changes in `src`.
+Executes `make reload` on changes.
 
 License
 -------

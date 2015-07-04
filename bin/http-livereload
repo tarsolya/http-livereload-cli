@@ -2,11 +2,12 @@
 
 var optimist = require('optimist');
 var http = require('http');
+var sane = require('sane');
+var execsh = require('exec-sh');
 var createApplication = require('../lib/server');
 
 var argv = optimist
   .usage('Usage: $0 <path> [options]')
-  .usage('Default <path> is ./www')
   .alias('h', 'host')
   .string('h')
   .describe('h', 'Host of the server.')
@@ -17,6 +18,14 @@ var argv = optimist
   .describe('lp', 'Port for the LiveReload server.')
   .string('l', 'log')
   .describe('l', 'Log requests to stdout with a <format>.')
+  .string('watch-dir')
+  .describe('watch-dir', 'Directory to watch for changes')
+  .string('watch-cmd')
+  .describe('watch-cmd', 'Command to execute on changes in watch-dir')
+  .string('watch-globs')
+  .describe('watch-globs', 'Comma separated file globs to watch for')
+  .string('w', 'wait-time')
+  .describe('watch-time', 'Seconds to throttle file changes before executing command again')
   .boolean('cordova')
   .describe('cordova', 'If set, the server will return a stub for Cordova device middleware at /cordova.js')
   .boolean('no-lr')
@@ -29,6 +38,7 @@ var argv = optimist
   .default('p', 3000)
   .default('lp', 35729)
   .default('l', 'tiny')
+  .default('w', 1)
   .default('no-lr', false)
   .default('no-log', false)
   .default('cordova', false)
@@ -43,6 +53,11 @@ if(argv._.length === 0 || argv.help) {
 var dir = argv._[0] || 'www';
 var host = argv.h;
 var port = argv.p;
+var watchDir = argv['watch-dir'];
+var watchCmd = argv['watch-cmd'];
+var globs = argv['watch-globs'];
+var waitTime = argv.w;
+var globList, watcher, wait, waitTime;
 
 var opts = {
   livereload: !argv['no-lr'],
@@ -52,7 +67,36 @@ var opts = {
   logFormat: argv.l
 };
 
+if(watchDir && watchCmd) {
+  if(globs) {
+    globList = globs.split(',');
+  } else {
+    globList = ['**/*'];
+  }
+  watcher = sane(watchDir, globList);
+  watcher.on('ready', function() {
+    console.log('Watcher is listening for changes:', watchDir, globList);
+    console.log('Command:', watchCmd);
+    execsh(watchCmd);
+  });
+  watcher.on('change', function (filepath) {
+    if (wait) { return; }
+    console.log('Change detected in:', filepath);
+    execsh(watchCmd);
+
+    if (waitTime > 0) {
+      wait = true;
+      setTimeout(function () {
+        wait = false;
+      }, waitTime * 1000);
+    }
+  });
+}
+
 process.on('exit', function() {
+  if(watcher) {
+    watcher.close();
+  }
   console.log('Server is going down.');
 });
 
