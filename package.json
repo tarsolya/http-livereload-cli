@@ -27,6 +27,7 @@
     "tiny-lr": "^0.1.6"
   },
   "bin": {
-    "http-livereload": "./bin/http-livereload"
+    "http-livereload": "./bin/http-livereload",
+    "livereload-notify": "./bin/livereload-notify"
   }
 }

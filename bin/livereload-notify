@@ -1,0 +1,28 @@
+#!/usr/bin/env node
+
+var optimist = require('optimist');
+var exec = require('child_process').exec;
+
+var argv = optimist
+  .usage('Usage: $0 file [file ...] [options]')
+  .alias('h', 'host')
+  .string('h')
+  .describe('h', 'LiveReload server host')
+  .alias('p', 'port')
+  .string('p')
+  .describe('p', 'LiveReload server port')
+  .default('h', 'localhost')
+  .default('p', 35729)
+  .argv;
+
+if(argv._.length === 0 || argv.help) {
+  console.log(optimist.help());
+  process.exit();
+}
+
+// Options
+var host = argv.h;
+var port = argv.p;
+var changed = argv._.join(',');
+
+exec('curl --ipv4 http://' + host + ':' + port + '/changed/files=' + changed);
